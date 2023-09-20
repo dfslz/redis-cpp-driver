@@ -2,5 +2,6 @@
 
 #### third party dependence
 + glog
++ gtest
 
 #### architecture

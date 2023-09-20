@@ -1,0 +1,28 @@
+@startuml
+class RedisClient {
+    + RedisClient(ipAddress)
+    + ~RedisClient()
+    + Subscribe(channel, callback)
+    + Query(key)
+    + Set(key, value)
+}
+
+class Network {
+    + Network()
+}
+
+abstract class Parser
+class ThreadPool
+
+
+Parser <|-- Int
+Parser <|-- float
+Parser <|-- string
+Parser <|-- set
+Parser <|-- map
+
+
+RedisClient o-- ThreadPool
+RedisClient <-- Network
+RedisClient o-- Parser
+@enduml
