@@ -21,12 +21,12 @@ bool RedisClient::Unsubscribe() {
     return false;
 }
 
-bool RedisClient::Execute(const std::string &&cmd) {
+bool RedisClient::Send(const std::string &&cmd) {
     if (!connection_ || (clientStatus_ != NORMAL)) {
         return false;
     }
     clientStatus_ = WAITING;
-    *msg_ = std::move(pool_->commit([&]() {
+    msg_ = std::move(pool_->commit([=]() {
         std::string reply;
         const bool status = connection_->Send(std::forward<const std::string&&>(cmd), reply);
         if (!status) { // 发送失败，认为网络断了，在获取回复的时候返回错误
@@ -39,21 +39,22 @@ bool RedisClient::Execute(const std::string &&cmd) {
 }
 
 const std::vector<Response> &RedisClient::GetResponse() {
-    if (!connection_ || !msg_->valid()) {
+    if (!connection_ || !msg_.valid()) {
         response_.clear();
         return response_;
     }
-    std::string msg = msg_->get();
-    msg_.reset(); // 释放这条消息，防止下一条命令误读
+    std::string msg = msg_.get();
+    msg_ = std::move(std::future<std::string>()); // 释放这条消息的future promise
 
     response_ = parser_.parse(std::forward<const std::string>(msg));
     return response_;
 }
 
 bool RedisClient::Connect() {
-    if (!connection_) {
+    if (!connection_ || !connection_->Connect()) {
         return false;
     }
-    return connection_->Connect();
+    clientStatus_ = NORMAL;
+    return true;
 }
 } // RedisCpp

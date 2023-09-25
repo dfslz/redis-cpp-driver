@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(redis_cpp_driver)
 
-add_compile_options(-O2)
+add_compile_options(-O0 -g)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src

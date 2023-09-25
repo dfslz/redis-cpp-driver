@@ -1,0 +1,15 @@
+@startuml
+class RedisClient {
+    + RedisClient(ipAddress)
+    + ~RedisClient()
+    + Subscribe(channel, callback)
+    + Query(key)
+    + Set(key, value)
+}
+
+class Network {
+    + Network()
+}
+
+RedisClient <-- Network
+@enduml

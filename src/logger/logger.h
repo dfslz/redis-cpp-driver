@@ -39,7 +39,7 @@ public:
 private:
     static void UserHeader(std::ostream &s, const google::LogMessageInfo &l, void *data) {
         char buf[LOG_ONE_LINE];
-        snprintf(buf, LOG_ONE_LINE, "[%5s][%04d%02d%02d %02d:%02d:%02d.%06d][%u][%s:%d]",
+        snprintf(buf, LOG_ONE_LINE, "[%5s] [%04d%02d%02d %02d:%02d:%02d.%06d] [%u] [%s:%d]",
                  mapping + (strchr(strSearch, l.severity[0]) - strSearch),
                  l.time.year(), l.time.month(), l.time.day(), l.time.hour(), l.time.min(), l.time.sec(),
                  l.time.usec(), l.thread_id, l.filename, l.line_number);

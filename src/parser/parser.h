@@ -48,10 +48,9 @@ public:
     static std::string Decode(const std::string& msg);
 
 private:
-    std::vector<std::string> Split(std::string str, const std::string&& delimiter);
+    static uint Split(const std::string& str, RedisCpp::Response& result);
     static uint IntegerParser(const std::string& reply, RedisCpp::Response& result);
     static uint StatusParser(const std::string& reply, RedisCpp::Response& result);
-    static uint SimpleStringParser(const std::string& reply, RedisCpp::Response& result);
     static uint BulkStringsParser(const std::string& reply, RedisCpp::Response& result);
     static uint ArrayParser(const std::string& reply, RedisCpp::Response& result);
 

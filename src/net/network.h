@@ -26,16 +26,42 @@ public:
      * @return 连接成功/失败
      */
     bool Connect();
+
+    /**
+     * @brief 关闭连接
+     */
     void Close();
-    bool Send(const std::string&& command, std::string& reply) const;
+
+    /**
+     * @brief 发送一条消息到服务端，并等待回复，默认1s没有消息则超时
+     * @param message 往服务端发送的消息
+     * @param reply 收到的回复
+     * @return 发送成功且收到回复成功 todo: 发送和收回复应该分开，并且分别返回是否成功
+     */
+    bool Send(const std::string&& message, std::string& reply) const;
+
+    /**
+     * 获取server端的消息，如果没有回复则等待超时返回空字符串，并返回false
+     * @param reply
+     * @return 接收成功/失败
+     */
+    bool Receive(std::string& reply);
+
+    /**
+     * 设置发送和接收消息的超时时间，默认不设置则为1s超时
+     * @param sec 秒
+     * @param usec 毫秒
+     * @return 设置成功/失败
+     */
+    bool SetTimeout(const uint sec, const uint usec);
 
 private:
     bool alive_{false};
     int socketHandle_{-1};
     sockaddr_in address_{};
-    const timeval timeout_{1, 0};
+    timeval timeout_{1, 0};
 
-    static constexpr uint BUF_LENGTH = 1024 * 100; // default 100k
+    static constexpr uint BUF_LENGTH = 1024 * 100; // 默认缓冲区100k，todo:改成可以设置的参数
 };
 
 } // RedisCpp

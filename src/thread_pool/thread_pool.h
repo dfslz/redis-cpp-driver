@@ -59,7 +59,7 @@ public:
         auto pack = std::make_shared<std::packaged_task<RetType(Args&&...)>>(func); // 打包任务
         {
             std::unique_lock<std::mutex> lock(taskLocker_);
-            taskQueue_.emplace([&, pack]() { (*pack)(std::forward<Args>(args)...); }); // 包装成void返回值lambda塞进任务队列
+            taskQueue_.emplace([=]() { (*pack)(std::forward<Args>(args)...); }); // 包装成void返回值lambda塞进任务队列
         }
         wakeup_.notify_one();
         return pack->get_future(); // 返回future以便获取执行返回值

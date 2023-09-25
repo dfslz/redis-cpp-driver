@@ -4,20 +4,30 @@
 #include "net/network.h"
 #include "thread_pool/thread_pool.h"
 #include "parser/parser.h"
+#include "redis_client/redis_client.h"
 
 int main(int argc, char* argv[]) {
     RedisCpp::Logger::SetLogLevel(google::INFO);
 
-    INFO("connect to redis-server");
-    RedisCpp::Network connection("127.0.0.1", 6379);
-    if (!connection.Connect()) {
-        ERROR("Connect failed");
+    RedisCpp::RedisClient client("127.0.0.1", 6379);
+    if (!client.Connect()) {
+        ERROR("connect failed");
     }
 
-    std::string reply;
-    connection.Send("object encoding test2\n", reply);
-    auto trans = RedisCpp::Parser::Decode(reply);
-    INFO("%s", trans.c_str());
+    if (!client.Send("set test2 1233.456\r\n")) {
+        ERROR("send error");
+    }
+
+    auto rsp = client.GetResponse();
+    for (const auto& r : rsp) {
+        if (r.GetDataType() == RedisCpp::Response::NIL) {
+            WARN("server return NIL");
+        }
+        auto tmp = r.Value();
+        for (const auto& s : tmp) {
+            WARN("server return : %s", s.c_str());
+        }
+    }
 
     return 0;
 }

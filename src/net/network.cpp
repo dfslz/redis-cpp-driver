@@ -55,6 +55,7 @@ bool Network::Send(const std::string&& command, std::string& reply) const {
         WARN("connection is inactive! please connect first.");
         return false;
     }
+    INFO("%lu, %s", command.length(), command.c_str());
 
     auto len = send(socketHandle_, command.c_str(), command.length(), 0);
     if (len != command.length()) {
@@ -73,7 +74,7 @@ bool Network::Send(const std::string&& command, std::string& reply) const {
         }
         buf[len] = '\0';
         reply += buf;
-        INFO("len: %d", len);
+        INFO("len: %d, %s", len, buf);
     }
     return !reply.empty();
 }
@@ -84,6 +85,30 @@ void Network::Close() {
     }
     shutdown(socketHandle_, SHUT_RDWR);
     alive_ = false;
+}
+
+bool Network::SetTimeout(const uint sec, const uint usec) {
+    timeout_.tv_sec = sec;
+    timeout_.tv_usec = usec;
+    return setsockopt(socketHandle_, SOL_SOCKET, SO_RCVTIMEO,
+                      reinterpret_cast<const char*>(&timeout_), sizeof(timeout_));
+}
+
+bool Network::Receive(std::string& reply) {
+    char buf[BUF_LENGTH];
+    reply.clear();
+    uint len = BUF_LENGTH - 1;
+    while(len == BUF_LENGTH - 1) { // 如果一次buff接受不完数据，则继续接收
+        len = recv(socketHandle_, buf, len, 0); // 留一位给字符串结束符
+        if (len == -1) {
+            WARN("receive failed or timeout!"); // 有可能上一次长度刚好和buffer一致，这时候下一次超时是正常情况
+            break;
+        }
+        buf[len] = '\0';
+        reply += buf;
+        INFO("len: %d, %s", len, buf);
+    }
+    return false;
 }
 
 } // RedisCpp

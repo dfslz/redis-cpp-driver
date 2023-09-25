@@ -49,7 +49,7 @@ public:
      * @param cmd Redis命令
      * @return 发送成功/失败
      */
-    bool Execute(const std::string&& cmd);
+    bool Send(const std::string&& cmd);
 
     /**
      * @brief 获取上一条命令的返回值解析结果，如果网络错误则返回空数组\n
@@ -69,7 +69,7 @@ private:
     std::unique_ptr<Network> connection_;
     std::unique_ptr<ThreadPool> pool_;
     std::vector<Response> response_;
-    std::unique_ptr<std::future<std::string>> msg_;
+    std::future<std::string> msg_;
     Parser parser_;
     std::function<void(const std::vector<Response>&)> callback_ = nullptr;
     int clientStatus_ = DISCONNECT;

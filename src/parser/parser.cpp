@@ -9,20 +9,16 @@
 
 namespace RedisCpp {
 std::unordered_map<uint, Parser::parserFunction> Parser::parser_;
-std::vector<std::string> Parser::Split(std::string str, const std::string&& delimiter) {
-    std::vector<std::string> result;
 
-    while(!str.empty()) {
-        auto pos = str.find(delimiter);
-        if (pos != std::string::npos) {
-            result.emplace_back(str.substr(0, pos));
-            str = str.substr(pos, str.length() - pos);
-        } else {
-            result.emplace_back(str);
-            break;
-        }
+uint Parser::Split(const std::string& str, RedisCpp::Response& result) {
+    size_t end = str.find("\r\n");
+    if (end == std::string::npos) { // msg broken
+        ERROR("msg broken! cannot found end symbols '\\r\\n'");
+        result.SetDataType(Response::NIL);
+        return 0U;
     }
-    return std::move(result);
+    result.PushBack(str.substr(0U, end));
+    return end + 1U + 2U;
 }
 
 std::vector<RedisCpp::Response> Parser::parse(const std::string &&rsp) {
@@ -31,8 +27,14 @@ std::vector<RedisCpp::Response> Parser::parse(const std::string &&rsp) {
     while(pos < rsp.length()) {
         RedisCpp::Response tmp;
         auto func = parser_[static_cast<uint>(rsp[pos])];
-        uint count = func(rsp.substr(pos, rsp.length() - pos), tmp);
+        uint count = 1U;
+        if (func) { // 如果没有找到匹配的消息头，则跳过
+            count += func(rsp.substr(pos + 1U, rsp.length() - pos), tmp);
+        } else {
+            ERROR("cannot found matched parser! please check parser of '%c', pos=%d", rsp[pos], pos);
+        }
         pos += count;
+        data_.push_back(std::move(tmp));
     }
     return data_;
 }
@@ -47,34 +49,41 @@ bool Parser::RegisterParser(const uint flag, const parserFunction &parser) {
 
 Parser::Parser() {
     RegisterParser(static_cast<uint>(':'), &Parser::IntegerParser);
-    RegisterParser(static_cast<uint>('+'), &Parser::SimpleStringParser);
+    RegisterParser(static_cast<uint>('+'), &Parser::StatusParser);
     RegisterParser(static_cast<uint>('-'), &Parser::StatusParser);
     RegisterParser(static_cast<uint>('$'), &Parser::BulkStringsParser);
     RegisterParser(static_cast<uint>('*'), &Parser::ArrayParser);
 }
 
 uint Parser::IntegerParser(const std::string &reply, RedisCpp::Response& result) {
-    uint count = 1U;
-    size_t end = reply.find("\r\n", count);
-    if (end == std::string::npos) { // msg broken
-        ERROR("msg broken! cannot found end symbols '\\r\\n'");
-        return count;
-    }
-
     result.SetDataType(Response::INT);
-    return count;
+    return Split(reply, result);
 }
 
 uint Parser::StatusParser(const std::string &reply, RedisCpp::Response& result) {
-    return {};
-}
-
-uint Parser::SimpleStringParser(const std::string &reply, Response &result) {
-    return 0;
+    result.SetDataType(Response::STATUS);
+    return Split(reply, result);
 }
 
 uint Parser::BulkStringsParser(const std::string &reply, Response &result) {
-    return 0;
+    result.SetDataType(Response::STRING);
+
+    size_t end = reply.find("\r\n");
+    if (end == std::string::npos) { // msg broken
+        ERROR("msg broken! cannot found end symbols '\\r\\n'");
+        result.SetDataType(Response::NIL);
+        return 0U;
+    }
+
+    int len = std::stoi(reply.substr(0U, end));
+    if (len < 0) { // 服务端返回了-1，这个key不存在
+        result.SetDataType(Response::NIL);
+        len = 0;
+    } else {
+        result.PushBack(reply.substr(end + 2U, len));
+        len += 2; // ends with '\r\n'
+    }
+    return (end + 1U) + 2U + len;
 }
 
 uint Parser::ArrayParser(const std::string &reply, Response &result) {

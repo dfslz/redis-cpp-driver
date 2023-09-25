@@ -35,17 +35,18 @@ public:
         INT = 1U,
         STRING = 2U,
         FLOAT = 3U,
-        ARRAY = 4U
+        ARRAY = 4U,
+        STATUS = 5U
     };
 
 private:
     std::vector<std::string> data_;
     uint dataType_;
-//    std::map<std::string, uint> checker_ = { todo: delete
-//            { typeid(int).name(), INT },
-//            { typeid(std::string).name(), STRING },
-//            { typeid(float).name(), FLOAT }
-//    };
+    std::map<std::string, uint> checker_ = { // todo:添加类型识别和转换功能，利用typeid检查合法性
+            { typeid(int).name(), INT },
+            { typeid(std::string).name(), STRING },
+            { typeid(float).name(), FLOAT }
+    };
 };
 
 } // RedisCpp
