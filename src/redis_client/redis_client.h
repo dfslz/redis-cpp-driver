@@ -45,15 +45,15 @@ public:
     bool Unsubscribe();
 
     /**
-     * @brief 向server端发送一个/一组命令，会异步执行，server端返回值可以通过GetResponse()获取
+     * @brief 向server端发送一组命令，会把状态置为waiting，直到调用GetResponse()清除状态
      * @param cmd Redis命令
      * @return 发送成功/失败
      */
     bool Send(const std::string&& cmd);
 
     /**
-     * @brief 获取上一条命令的返回值解析结果，如果网络错误则返回空数组\n
-     * @brief (btw. 如果网络没有异常，则至少有一条OK状态消息返回)
+     * @brief 获取上一条命令的返回值解析结果，如果获取失败则返回空数组\n
+     * @brief (如果网络没有异常，则至少有一条OK状态消息返回)
      * @return 解析server端返回值的结果数组
      */
     const std::vector<Response>& GetResponse();
@@ -67,12 +67,12 @@ private:
     };
 
     std::unique_ptr<Network> connection_;
-    std::unique_ptr<ThreadPool> pool_;
+    std::unique_ptr<ThreadPool> pool_ = nullptr;
     std::vector<Response> response_;
-    std::future<std::string> msg_;
     Parser parser_;
     std::function<void(const std::vector<Response>&)> callback_ = nullptr;
     int clientStatus_ = DISCONNECT;
+    std::atomic_bool listen_ = ATOMIC_VAR_INIT(false);
 };
 
 } // RedisCpp

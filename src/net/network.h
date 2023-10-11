@@ -38,14 +38,14 @@ public:
      * @param reply 收到的回复
      * @return 发送成功且收到回复成功 todo: 发送和收回复应该分开，并且分别返回是否成功
      */
-    bool Send(const std::string&& message, std::string& reply) const;
+    bool Send(const std::string&& message) const;
 
     /**
      * 获取server端的消息，如果没有回复则等待超时返回空字符串，并返回false
      * @param reply
      * @return 接收成功/失败
      */
-    bool Receive(std::string& reply);
+    bool Receive(std::string& reply) const;
 
     /**
      * 设置发送和接收消息的超时时间，默认不设置则为1s超时

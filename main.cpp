@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
         ERROR("connect failed");
     }
 
-    if (!client.Send("set test2 1233.456\r\n")) {
+    if (!client.Send("set test 123 XX\r\n")) {
         ERROR("send error");
     }
 
