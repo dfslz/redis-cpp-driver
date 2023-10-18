@@ -36,7 +36,7 @@ public:
      * @brief 发送一条消息到服务端，并等待回复，默认1s没有消息则超时
      * @param message 往服务端发送的消息
      * @param reply 收到的回复
-     * @return 发送成功且收到回复成功 todo: 发送和收回复应该分开，并且分别返回是否成功
+     * @return 发送成功且收到回复成功
      */
     bool Send(const std::string&& message) const;
 
@@ -54,6 +54,12 @@ public:
      * @return 设置成功/失败
      */
     bool SetTimeout(const uint sec, const uint usec);
+
+    /**
+     * 检查连接是否断开
+     * @return tcp连接是否断开
+     */
+     bool IsAlive() const;
 
 private:
     bool alive_{false};

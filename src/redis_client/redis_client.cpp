@@ -22,8 +22,14 @@ bool RedisClient::Subscribe(const std::string &&channel,
 
     pool_->commit([&, callback]() { // callback需要值捕获，否则离开Subscribe后异步线程会调用空指针
         // 由于连接监听有超时，所以这里要一直轮询，直到收到退出命令为止，注意默认超时时间是1s，可以调用connection_->SetTimeout设置
+        std::string reply;
         while(listen_) {
-            // todo:轮询receive并调用回调函数
+            // 轮询receive并调用回调函数
+            bool success = connection_->Receive(reply);
+            if (success) {
+                auto response = parser_.parse(std::forward<const std::string>(reply));
+                callback(response); // todo: 测试订阅功能
+            }
         }
     });
     return true;
@@ -38,7 +44,11 @@ bool RedisClient::Unsubscribe() {
     connection_->Send("UNSUBSCRIBE\r\n");
 
     std::string msg;
-    bool success = connection_->Receive(msg); // todo: 这里判断返回值是否正确，如果接收失败置为DISCONNECT
+    bool success = connection_->Receive(msg);
+    if (!success) {
+        clientStatus_ = DISCONNECT;
+        return false;
+    }
     clientStatus_ = NORMAL;
     return true;
 }

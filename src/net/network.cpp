@@ -7,6 +7,7 @@
 #include "network.h"
 #include "logger/logger.h"
 #include <algorithm>
+#include <netinet/tcp.h>
 
 namespace RedisCpp {
 Network::Network(const std::string&& ip, const uint32_t port, const sa_family_t protocol) {
@@ -95,6 +96,16 @@ bool Network::Receive(std::string& reply) const {
         INFO("len: %d, %s", len, buf);
     }
     return reply.length();
+}
+
+bool Network::IsAlive() const {
+    tcp_info info{};
+    int len=sizeof(info);
+    getsockopt(socketHandle_, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len);
+    if(info.tcpi_state == TCP_ESTABLISHED) {
+        return true;
+    }
+    return false;
 }
 
 } // RedisCpp
